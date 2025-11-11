@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { 
+  FiHeart, 
+  FiFileText, 
+  FiDollarSign, 
+  FiSearch,
+  FiLogOut,
+  FiClock,
+  FiUsers
+} from 'react-icons/fi'
+import logo from '../assets/logo.jpg'
 
 export default function DonorDashboard() {
   const { profile, signOut } = useAuth()
@@ -18,6 +28,9 @@ export default function DonorDashboard() {
   const [success, setSuccess] = useState('')
   const [activeTab, setActiveTab] = useState('sponsorships') // 'sponsorships', 'reports', 'receipts'
 
+  // Mobile Profile Menu State
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState(false)
+
   // Reports & Receipts State
   const [approvedWeeklyReports, setApprovedWeeklyReports] = useState([])
   const [approvedAcademicReports, setApprovedAcademicReports] = useState([])
@@ -28,6 +41,19 @@ export default function DonorDashboard() {
       fetchData()
     }
   }, [profile?.id])
+
+  // Close mobile profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMobileProfileMenu && !event.target.closest('.mobile-profile-menu')) {
+        setShowMobileProfileMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMobileProfileMenu])
 
   useEffect(() => {
     if (activeTab === 'reports' && profile?.id) {
@@ -51,11 +77,13 @@ export default function DonorDashboard() {
         .order('created_at', { ascending: false })
 
       if (profilesError) {
-        console.error('Error fetching student profiles:', profilesError)
+        if (import.meta.env.DEV) {
+          console.error('Error fetching student profiles:', profilesError)
+        }
         throw profilesError
       }
 
-      console.log('Found student profiles:', studentProfiles?.length || 0, studentProfiles)
+      // Student profiles fetched successfully
 
       // Initialize studentsData with all profiles (student records are optional)
       let studentsData = []
@@ -72,13 +100,15 @@ export default function DonorDashboard() {
 
           if (studentsError) {
             // Don't throw - student records are optional
-            console.warn('Error fetching student records (non-critical):', studentsError)
+            if (import.meta.env.DEV) {
+              console.warn('Error fetching student records (non-critical):', studentsError)
+            }
           } else {
             studentRecords = records || []
           }
         }
 
-        console.log('Student records found:', studentRecords.length)
+        // Student records processed
 
         // Merge profiles with student records
         // Show ALL students from profiles table, even if they don't have student records yet
@@ -113,7 +143,9 @@ export default function DonorDashboard() {
       } else {
         // No student profiles found
         studentsData = []
-        console.warn('No student profiles found - check RLS policies')
+        if (import.meta.env.DEV) {
+          console.warn('No student profiles found - check RLS policies')
+        }
       }
 
       // First, fetch all active sponsorships to filter out sponsored students
@@ -132,32 +164,19 @@ export default function DonorDashboard() {
           }
         })
       } else if (allLinksError) {
-        console.warn('Error fetching active sponsorships (non-critical):', allLinksError)
+        if (import.meta.env.DEV) {
+          console.warn('Error fetching active sponsorships (non-critical):', allLinksError)
+        }
       }
-
-      console.log('Active sponsorship links:', allActiveLinks)
-      console.log('Sponsored student IDs:', Array.from(sponsoredStudentIds))
 
       // Filter out students who have active sponsorships
       // Only show students that don't have active sponsorships
-      console.log('Total students before filtering:', studentsData.length)
-      console.log('Student IDs before filtering:', studentsData.map(s => s.id))
-      console.log('Students with active sponsorships (Set):', Array.from(sponsoredStudentIds))
-      
-      // Filter and log each check
       const filteredStudents = studentsData.filter(student => {
         const isSponsored = sponsoredStudentIds.has(student.id)
-        if (isSponsored) {
-          console.log(`Filtering out sponsored student: ${student.id} - ${student.profiles?.full_name}`)
-        }
         return !isSponsored
       })
       
       studentsData = filteredStudents
-      
-      console.log('Available students after filtering:', studentsData.length)
-      console.log('Available student IDs:', studentsData.map(s => s.id))
-      console.log('Available students:', studentsData)
 
       // Fetch my sponsorship requests
       const { data: requestsData, error: requestsError } = await supabase
@@ -245,12 +264,13 @@ export default function DonorDashboard() {
 
       // Set all available students (this includes students with or without student records)
       // Note: Admin creates user profiles, student details can be filled optionally later
-      console.log('Setting students state:', studentsData?.length || 0, studentsData)
       setStudents(studentsData || [])
       setRequests(requestsData || [])
       setLinks(linksData || [])
     } catch (error) {
-      console.error('Error fetching data:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching data:', error)
+      }
       setError('Failed to load data')
     } finally {
       setLoading(false)
@@ -298,7 +318,7 @@ export default function DonorDashboard() {
           throw new Error(`Failed to create student record: ${ensureError.message}`)
         }
 
-        console.log('Student record created/ensured:', studentId)
+        // Student record created/ensured successfully
       }
 
       // Now create the sponsorship request
@@ -322,7 +342,9 @@ export default function DonorDashboard() {
       setRequestData({ message: '', requested_amount: '' })
       fetchData()
     } catch (error) {
-      console.error('Error creating request:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error creating request:', error)
+      }
       setError(error.message || 'Failed to submit request')
     }
   }
@@ -386,7 +408,9 @@ export default function DonorDashboard() {
       setApprovedWeeklyReports(weeklyData || [])
       setApprovedAcademicReports(academicData || [])
     } catch (error) {
-      console.error('Error fetching approved reports:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching approved reports:', error)
+      }
       setError('Failed to load approved reports')
     }
   }
@@ -425,7 +449,9 @@ export default function DonorDashboard() {
 
       setVerifiedReceipts(receiptsData || [])
     } catch (error) {
-      console.error('Error fetching verified receipts:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching verified receipts:', error)
+      }
       setError('Failed to load verified receipts')
     }
   }
@@ -446,42 +472,143 @@ export default function DonorDashboard() {
     }
   }
 
-  // Navigation items for mobile menu
+  // Navigation items
   const navigationItems = [
-    { id: 'sponsorships', label: 'Sponsorships', icon: '🤝' },
-    { id: 'reports', label: 'Reports', icon: '📋' },
-    { id: 'receipts', label: 'Receipts', icon: '💰' },
+    { id: 'sponsorships', label: 'Sponsorships', icon: FiHeart },
+    { id: 'reports', label: 'Reports', icon: FiFileText },
+    { id: 'receipts', label: 'Receipts', icon: FiDollarSign },
   ]
 
+  const [searchQuery, setSearchQuery] = useState('')
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-md border-b border-white/20 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Donor Dashboard</h1>
-            <div className="hidden lg:flex items-center space-x-4">
-              <span className="text-gray-700 font-medium">
-                Welcome, {profile?.full_name || 'Donor'}
-              </span>
-              <button
-                onClick={signOut}
-                className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                Sign Out
-              </button>
+    <div className="min-h-screen bg-white flex">
+      {/* Sidebar - Desktop */}
+      <aside className="hidden lg:flex lg:flex-shrink-0">
+        <div className="flex flex-col w-64 bg-white border-r border-gray-200">
+          {/* Brand Section */}
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
+            <div className="flex-shrink-0 w-10 h-10 relative">
+              <img 
+                src={logo} 
+                alt="Bego Sitota Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
             </div>
-            <div className="lg:hidden flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
+            <h1 className="text-lg font-bold text-black">Bego Sitota</h1>
+          </div>
+
+          {/* Search Bar */}
+          <div className="px-4 py-4 border-b border-gray-200">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-gray-700'}`} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Sidebar Footer - User Profile */}
+          <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center gap-3 px-3 py-3">
+              <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
                 {profile?.full_name?.charAt(0)?.toUpperCase() || 'D'}
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-black truncate">
+                  {profile?.full_name || 'Donor'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {profile?.email || 'donor@example.com'}
+                </p>
+              </div>
+              <button
+                onClick={signOut}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 flex-shrink-0"
+                title="Sign Out"
+              >
+                <FiLogOut className="w-5 h-5 text-red-600" />
+              </button>
             </div>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="flex-1 overflow-y-auto pb-20 lg:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-0 bg-gray-50">
+        {/* Top Header - Mobile */}
+        <header className="lg:hidden bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+          <div className="flex items-center justify-between h-16 px-4">
+            <div className="flex-shrink-0 w-10 h-10 relative">
+              <img 
+                src={logo} 
+                alt="Bego Sitota Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
+            </div>
+            <div className="relative mobile-profile-menu">
+              <button
+                onClick={() => setShowMobileProfileMenu(!showMobileProfileMenu)}
+                className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              >
+                {profile?.full_name?.charAt(0)?.toUpperCase() || 'D'}
+              </button>
+              
+              {/* Mobile Profile Menu Dropdown */}
+              {showMobileProfileMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-black">
+                      {profile?.full_name || 'Donor'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {profile?.email || 'donor@example.com'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowMobileProfileMenu(false)
+                      signOut()
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors duration-200"
+                  >
+                    <FiLogOut className="w-5 h-5" />
+                    <span className="font-medium">Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-24 lg:pb-8">
         {/* Alerts */}
         {error && (
           <div className="mb-4 bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
@@ -494,82 +621,51 @@ export default function DonorDashboard() {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-200/30 rounded-full -mr-10 -mt-10"></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
-                  <span className="text-2xl">🤝</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Active Sponsorships</h3>
-              <p className="text-3xl font-bold text-indigo-600">{links.length}</p>
-            </div>
-          </div>
-          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-200/30 rounded-full -mr-10 -mt-10"></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-md">
-                  <span className="text-2xl">⏳</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Pending Requests</h3>
-              <p className="text-3xl font-bold text-yellow-600">
-                {requests.filter(r => r.status === 'pending').length}
+            {/* Page Title */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-black">
+                {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {profile?.full_name ? `Welcome back, ${profile.full_name}` : 'Welcome to Donor Dashboard'}
               </p>
             </div>
-          </div>
-          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200/30 rounded-full -mr-10 -mt-10"></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                  <span className="text-2xl">👥</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Available Students</h3>
-              <p className="text-3xl font-bold text-blue-600">{students.length}</p>
-            </div>
-          </div>
-          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-green-200/30 rounded-full -mr-10 -mt-10"></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
-                  <span className="text-2xl">📊</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Reports & Receipts</h3>
-              <p className="text-3xl font-bold text-green-600">
-                {(approvedWeeklyReports.length || 0) + (approvedAcademicReports.length || 0) + (verifiedReceipts.length || 0)}
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* Tabs - Desktop */}
-        <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 mb-6">
-          <div className="border-b border-gray-200/50">
-            <nav className="flex -mb-px">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`py-4 px-6 text-sm font-semibold border-b-2 transition-all duration-200 ${
-                    activeTab === item.id
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6 mb-6">
+              <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <FiHeart className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Active Sponsorships</p>
+                <p className="text-3xl font-bold text-black">{links.length}</p>
+              </div>
+              <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <FiClock className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Pending Requests</p>
+                <p className="text-3xl font-bold text-black">
+                  {requests.filter(r => r.status === 'pending').length}
+                </p>
+              </div>
+              <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <FiUsers className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Available Students</p>
+                <p className="text-3xl font-bold text-black">{students.length}</p>
+              </div>
+              <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <FiFileText className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Reports & Receipts</p>
+                <p className="text-3xl font-bold text-black">
+                  {(approvedWeeklyReports.length || 0) + (approvedAcademicReports.length || 0) + (verifiedReceipts.length || 0)}
+                </p>
+              </div>
+            </div>
 
         {/* Sponsorships Tab */}
         {activeTab === 'sponsorships' && (
@@ -587,7 +683,7 @@ export default function DonorDashboard() {
                     Message (Optional)
                   </label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                     rows="4"
                     value={requestData.message}
                     onChange={(e) =>
@@ -604,7 +700,7 @@ export default function DonorDashboard() {
                     type="number"
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                     value={requestData.requested_amount}
                     onChange={(e) =>
                       setRequestData({ ...requestData, requested_amount: e.target.value })
@@ -615,7 +711,7 @@ export default function DonorDashboard() {
                 <div className="flex space-x-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                    className="flex-1 bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600"
                   >
                     Submit Request
                   </button>
@@ -635,8 +731,8 @@ export default function DonorDashboard() {
           </div>
         )}
 
-        {/* Active Sponsorships */}
-        <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden mb-6">
+            {/* Active Sponsorships */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold">My Active Sponsorships</h2>
           </div>
@@ -689,8 +785,8 @@ export default function DonorDashboard() {
           )}
         </div>
 
-        {/* My Requests */}
-        <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden mb-6">
+            {/* My Requests */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold">My Sponsorship Requests</h2>
           </div>
@@ -734,8 +830,8 @@ export default function DonorDashboard() {
           )}
         </div>
 
-        {/* Available Students */}
-        <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
+            {/* Available Students */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold">Available Students for Sponsorship</h2>
           </div>
@@ -789,7 +885,7 @@ export default function DonorDashboard() {
                           {canRequest ? (
                             <button
                               onClick={() => handleRequestSponsorship(student)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="text-black hover:text-gray-700 font-medium"
                             >
                               Request Sponsorship
                             </button>
@@ -814,7 +910,7 @@ export default function DonorDashboard() {
         {activeTab === 'reports' && (
           <>
             {/* Weekly Reports Section */}
-            <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold">Approved Weekly Volunteer Reports</h2>
               </div>
@@ -865,7 +961,7 @@ export default function DonorDashboard() {
             </div>
 
             {/* Academic Reports Section */}
-            <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold">Approved Academic Reports</h2>
               </div>
@@ -917,7 +1013,7 @@ export default function DonorDashboard() {
 
         {/* Verified Receipts Tab */}
         {activeTab === 'receipts' && (
-          <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold">Verified Tuition Receipts</h2>
             </div>
@@ -971,28 +1067,32 @@ export default function DonorDashboard() {
             )}
           </div>
         )}
-      </div>
-      </main>
+          </div>
+        </main>
 
-      {/* Bottom Menu - Mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200/50 shadow-lg z-20 safe-area-inset-bottom">
-        <div className="flex items-center justify-around px-2 py-2">
-          {navigationItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
-                activeTab === item.id
-                  ? 'bg-gradient-to-b from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
-                  : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
-              }`}
-            >
-              <span className="text-2xl mb-1">{item.icon}</span>
-              <span className="text-xs font-medium truncate max-w-[60px]">{item.label.split(' ')[0]}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+        {/* Bottom Menu - Mobile */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20 safe-area-inset-bottom">
+          <div className="flex items-center justify-around px-2 py-2">
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium truncate max-w-[60px]">{item.label.split(' ')[0]}</span>
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      </div>
     </div>
   )
 }

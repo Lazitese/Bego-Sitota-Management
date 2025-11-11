@@ -56,7 +56,10 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error
       setProfile(data)
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      // Only log in development mode
+      if (import.meta.env.DEV) {
+        console.error('Error fetching profile:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -88,7 +91,10 @@ export const AuthProvider = ({ children }) => {
       setProfile(null)
       navigate('/login')
     } catch (error) {
-      console.error('Error signing out:', error)
+      // Only log in development mode
+      if (import.meta.env.DEV) {
+        console.error('Error signing out:', error)
+      }
     }
   }
 

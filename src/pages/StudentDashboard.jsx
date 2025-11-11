@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { uploadToR2 } from '../lib/upload'
+import { 
+  FiBarChart2, 
+  FiCalendar, 
+  FiFileText, 
+  FiDollarSign, 
+  FiSearch,
+  FiLogOut
+} from 'react-icons/fi'
+import logo from '../assets/logo.jpg'
 
 export default function StudentDashboard() {
   const { profile, signOut } = useAuth()
@@ -13,13 +22,18 @@ export default function StudentDashboard() {
   const [success, setSuccess] = useState('')
   const [activeTab, setActiveTab] = useState('overview') // 'overview', 'weekly', 'academic', 'receipts'
 
-  // Navigation items for mobile menu
+  // Mobile Profile Menu State
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState(false)
+
+  // Navigation items
   const navigationItems = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'weekly', label: 'Weekly', icon: '📅' },
-    { id: 'academic', label: 'Academic', icon: '📋' },
-    { id: 'receipts', label: 'Receipts', icon: '💰' },
+    { id: 'overview', label: 'Overview', icon: FiBarChart2 },
+    { id: 'weekly', label: 'Weekly', icon: FiCalendar },
+    { id: 'academic', label: 'Academic', icon: FiFileText },
+    { id: 'receipts', label: 'Receipts', icon: FiDollarSign },
   ]
+
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Weekly Reports State
   const [weeklyReports, setWeeklyReports] = useState([])
@@ -64,6 +78,19 @@ export default function StudentDashboard() {
     fetchData()
   }, [profile?.id])
 
+  // Close mobile profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMobileProfileMenu && !event.target.closest('.mobile-profile-menu')) {
+        setShowMobileProfileMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMobileProfileMenu])
+
   useEffect(() => {
     if (activeTab === 'weekly') {
       fetchWeeklyReports()
@@ -86,7 +113,9 @@ export default function StudentDashboard() {
         .maybeSingle()
 
       if (studentError && studentError.code !== 'PGRST116' && studentError.code !== '42P17') {
-        console.warn('Error fetching student data:', studentError)
+        if (import.meta.env.DEV) {
+          console.warn('Error fetching student data:', studentError)
+        }
       }
       setStudentData(studentInfo || null)
 
@@ -112,7 +141,9 @@ export default function StudentDashboard() {
       }
 
       if (linkError && linkError.code !== 'PGRST116' && linkError.code !== '42P17' && linkError.status !== 406) {
-        console.warn('Error fetching sponsorship link:', linkError)
+        if (import.meta.env.DEV) {
+          console.warn('Error fetching sponsorship link:', linkError)
+        }
       }
       setSponsorshipLink(linkData || null)
 
@@ -140,7 +171,9 @@ export default function StudentDashboard() {
       if (requestsError) throw requestsError
       setRequests(requestsData || [])
     } catch (error) {
-      console.error('Error fetching data:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching data:', error)
+      }
       setError('Failed to load sponsorship data')
     } finally {
       setLoading(false)
@@ -158,7 +191,9 @@ export default function StudentDashboard() {
       if (error) throw error
       setWeeklyReports(data || [])
     } catch (error) {
-      console.error('Error fetching weekly reports:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching weekly reports:', error)
+      }
       setError('Failed to load weekly reports')
     }
   }
@@ -175,7 +210,9 @@ export default function StudentDashboard() {
       if (error) throw error
       setAcademicReports(data || [])
     } catch (error) {
-      console.error('Error fetching academic reports:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching academic reports:', error)
+      }
       setError('Failed to load academic reports')
     }
   }
@@ -191,7 +228,9 @@ export default function StudentDashboard() {
       if (error) throw error
       setTuitionReceipts(data || [])
     } catch (error) {
-      console.error('Error fetching tuition receipts:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching tuition receipts:', error)
+      }
       setError('Failed to load tuition receipts')
     }
   }
@@ -261,7 +300,9 @@ export default function StudentDashboard() {
             const uploadResult = await uploadToR2(file, `weekly-reports/${profile?.id}`)
             documentUrls.push(uploadResult.url)
           } catch (uploadError) {
-            console.error('Error uploading file:', uploadError)
+            if (import.meta.env.DEV) {
+              console.error('Error uploading file:', uploadError)
+            }
             throw new Error(`Failed to upload file: ${file.name}`)
           }
         }
@@ -296,7 +337,9 @@ export default function StudentDashboard() {
       })
       fetchWeeklyReports()
     } catch (error) {
-      console.error('Error submitting weekly report:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error submitting weekly report:', error)
+      }
       setError(error.message || 'Failed to submit weekly report')
     } finally {
       setUploadingWeekly(false)
@@ -403,7 +446,9 @@ export default function StudentDashboard() {
       })
       fetchAcademicReports()
     } catch (error) {
-      console.error('Error submitting academic report:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error submitting academic report:', error)
+      }
       setError(error.message || 'Failed to submit academic report')
     } finally {
       setUploadingAcademic(false)
@@ -486,7 +531,9 @@ export default function StudentDashboard() {
       })
       fetchTuitionReceipts()
     } catch (error) {
-      console.error('Error submitting tuition receipt:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error submitting tuition receipt:', error)
+      }
       setError(error.message || 'Failed to submit tuition receipt')
     } finally {
       setUploadingReceipt(false)
@@ -510,34 +557,133 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-md border-b border-white/20 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Student Dashboard</h1>
-            <div className="hidden lg:flex items-center space-x-4">
-              <span className="text-gray-700 font-medium">
-                Welcome, {profile?.full_name || 'Student'}
-              </span>
-              <button
-                onClick={signOut}
-                className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                Sign Out
-              </button>
+    <div className="min-h-screen bg-white flex">
+      {/* Sidebar - Desktop */}
+      <aside className="hidden lg:flex lg:flex-shrink-0">
+        <div className="flex flex-col w-64 bg-white border-r border-gray-200">
+          {/* Brand Section */}
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
+            <div className="flex-shrink-0 w-10 h-10 relative">
+              <img 
+                src={logo} 
+                alt="Bego Sitota Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
             </div>
-            <div className="lg:hidden flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
+            <h1 className="text-lg font-bold text-black">Bego Sitota</h1>
+          </div>
+
+          {/* Search Bar */}
+          <div className="px-4 py-4 border-b border-gray-200">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-gray-700'}`} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Sidebar Footer - User Profile */}
+          <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center gap-3 px-3 py-3">
+              <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
                 {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-black truncate">
+                  {profile?.full_name || 'Student'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {profile?.email || 'student@example.com'}
+                </p>
+              </div>
+              <button
+                onClick={signOut}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 flex-shrink-0"
+                title="Sign Out"
+              >
+                <FiLogOut className="w-5 h-5 text-red-600" />
+              </button>
             </div>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="flex-1 overflow-y-auto pb-20 lg:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-0 bg-gray-50">
+        {/* Top Header - Mobile */}
+        <header className="lg:hidden bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+          <div className="flex items-center justify-between h-16 px-4">
+            <div className="flex-shrink-0 w-10 h-10 relative">
+              <img 
+                src={logo} 
+                alt="Bego Sitota Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
+            </div>
+            <div className="relative mobile-profile-menu">
+              <button
+                onClick={() => setShowMobileProfileMenu(!showMobileProfileMenu)}
+                className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              >
+                {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
+              </button>
+              
+              {/* Mobile Profile Menu Dropdown */}
+              {showMobileProfileMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-black">
+                      {profile?.full_name || 'Student'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {profile?.email || 'student@example.com'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowMobileProfileMenu(false)
+                      signOut()
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors duration-200"
+                  >
+                    <FiLogOut className="w-5 h-5" />
+                    <span className="font-medium">Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-24 lg:pb-8">
         {/* Alerts */}
         {error && (
           <div className="mb-4 bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
@@ -550,36 +696,25 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {/* Tabs - Desktop */}
-        <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 mb-6">
-          <div className="border-b border-gray-200/50">
-            <nav className="flex -mb-px">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`py-4 px-6 text-sm font-semibold border-b-2 transition-all duration-200 ${
-                    activeTab === item.id
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {item.id === 'overview' ? 'Overview' : item.id === 'weekly' ? 'Weekly Reports' : item.id === 'academic' ? 'Academic Reports' : 'Tuition Receipts'}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
+            {/* Page Title */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-black">
+                {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {profile?.full_name ? `Welcome back, ${profile.full_name}` : 'Welcome to Student Dashboard'}
+              </p>
+            </div>
 
-        {loading && activeTab === 'overview' ? (
-          <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 p-6 text-center">Loading...</div>
-        ) : (
-          <>
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
+            {loading && activeTab === 'overview' ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">Loading...</div>
+            ) : (
               <>
-                {/* Current Sponsorship */}
-                <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 p-6 mb-6">
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (
+                  <>
+                    {/* Current Sponsorship */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                   <h2 className="text-xl font-semibold mb-4">Current Sponsorship Status</h2>
                   {sponsorshipLink ? (
                     <div className="space-y-4">
@@ -623,9 +758,9 @@ export default function StudentDashboard() {
                   )}
                 </div>
 
-                {/* Student Information */}
-                {studentData && (
-                  <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 p-6 mb-6">
+                    {/* Student Information */}
+                    {studentData && (
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                     <h2 className="text-xl font-semibold mb-4">My Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -656,8 +791,8 @@ export default function StudentDashboard() {
                   </div>
                 )}
 
-                {/* Sponsorship Requests */}
-                <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
+                    {/* Sponsorship Requests */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h2 className="text-xl font-semibold">Sponsorship Requests</h2>
                   </div>
@@ -701,18 +836,18 @@ export default function StudentDashboard() {
               </>
             )}
 
-            {/* Weekly Reports Tab */}
-            {activeTab === 'weekly' && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">Weekly Volunteer Reports</h2>
-                  <button
-                    onClick={() => setShowWeeklyForm(!showWeeklyForm)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
-                  >
-                    {showWeeklyForm ? 'Cancel' : '+ Submit Report'}
-                  </button>
-                </div>
+                {/* Weekly Reports Tab */}
+                {activeTab === 'weekly' && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                      <h2 className="text-xl font-semibold">Weekly Volunteer Reports</h2>
+                      <button
+                        onClick={() => setShowWeeklyForm(!showWeeklyForm)}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 text-sm"
+                      >
+                        {showWeeklyForm ? 'Cancel' : '+ Submit Report'}
+                      </button>
+                    </div>
 
                 {showWeeklyForm && (
                   <div className="p-6 border-b border-gray-200">
@@ -726,7 +861,7 @@ export default function StudentDashboard() {
                           <input
                             type="date"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={weeklyFormData.week_start_date}
                             onChange={(e) => setWeeklyFormData({ ...weeklyFormData, week_start_date: e.target.value })}
                           />
@@ -738,7 +873,7 @@ export default function StudentDashboard() {
                           <input
                             type="date"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={weeklyFormData.week_end_date}
                             onChange={(e) => setWeeklyFormData({ ...weeklyFormData, week_end_date: e.target.value })}
                           />
@@ -751,7 +886,7 @@ export default function StudentDashboard() {
                             type="number"
                             step="0.5"
                             min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={weeklyFormData.volunteer_hours}
                             onChange={(e) => setWeeklyFormData({ ...weeklyFormData, volunteer_hours: e.target.value })}
                           />
@@ -762,7 +897,7 @@ export default function StudentDashboard() {
                           </label>
                           <input
                             type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={weeklyFormData.location}
                             onChange={(e) => setWeeklyFormData({ ...weeklyFormData, location: e.target.value })}
                           />
@@ -803,7 +938,7 @@ export default function StudentDashboard() {
                       <button
                         type="submit"
                         disabled={uploadingWeekly}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {uploadingWeekly ? 'Uploading...' : 'Submit Report'}
                       </button>
@@ -854,18 +989,18 @@ export default function StudentDashboard() {
               </div>
             )}
 
-            {/* Academic Reports Tab */}
-            {activeTab === 'academic' && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">Academic Reports</h2>
-                  <button
-                    onClick={() => setShowAcademicForm(!showAcademicForm)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
-                  >
-                    {showAcademicForm ? 'Cancel' : '+ Submit Report'}
-                  </button>
-                </div>
+                {/* Academic Reports Tab */}
+                {activeTab === 'academic' && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                      <h2 className="text-xl font-semibold">Academic Reports</h2>
+                      <button
+                        onClick={() => setShowAcademicForm(!showAcademicForm)}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 text-sm"
+                      >
+                        {showAcademicForm ? 'Cancel' : '+ Submit Report'}
+                      </button>
+                    </div>
 
                 {showAcademicForm && (
                   <div className="p-6 border-b border-gray-200">
@@ -878,7 +1013,7 @@ export default function StudentDashboard() {
                           </label>
                           <select
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={academicFormData.semester}
                             onChange={(e) => setAcademicFormData({ ...academicFormData, semester: e.target.value })}
                           >
@@ -896,7 +1031,7 @@ export default function StudentDashboard() {
                           <input
                             type="text"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={academicFormData.academic_year}
                             onChange={(e) => setAcademicFormData({ ...academicFormData, academic_year: e.target.value })}
                             placeholder="e.g., 2024-2025"
@@ -911,7 +1046,7 @@ export default function StudentDashboard() {
                             step="0.01"
                             min="0"
                             max="4"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={academicFormData.gpa}
                             onChange={(e) => setAcademicFormData({ ...academicFormData, gpa: e.target.value })}
                           />
@@ -923,7 +1058,7 @@ export default function StudentDashboard() {
                           <input
                             type="number"
                             min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={academicFormData.courses_enrolled}
                             onChange={(e) => setAcademicFormData({ ...academicFormData, courses_enrolled: e.target.value })}
                           />
@@ -935,7 +1070,7 @@ export default function StudentDashboard() {
                           <input
                             type="number"
                             min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={academicFormData.courses_completed}
                             onChange={(e) => setAcademicFormData({ ...academicFormData, courses_completed: e.target.value })}
                           />
@@ -947,7 +1082,7 @@ export default function StudentDashboard() {
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             onChange={(e) => setAcademicFormData({ ...academicFormData, report_file: e.target.files?.[0] || null })}
                           />
                           {academicFormData.report_file && (
@@ -960,7 +1095,7 @@ export default function StudentDashboard() {
                       <button
                         type="submit"
                         disabled={uploadingAcademic}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {uploadingAcademic ? 'Uploading...' : 'Submit Report'}
                       </button>
@@ -1015,18 +1150,18 @@ export default function StudentDashboard() {
               </div>
             )}
 
-            {/* Tuition Receipts Tab */}
-            {activeTab === 'receipts' && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border border-white/20 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">Tuition Receipts</h2>
-                  <button
-                    onClick={() => setShowReceiptForm(!showReceiptForm)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
-                  >
-                    {showReceiptForm ? 'Cancel' : '+ Upload Receipt'}
-                  </button>
-                </div>
+                {/* Tuition Receipts Tab */}
+                {activeTab === 'receipts' && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                      <h2 className="text-xl font-semibold">Tuition Receipts</h2>
+                      <button
+                        onClick={() => setShowReceiptForm(!showReceiptForm)}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 text-sm"
+                      >
+                        {showReceiptForm ? 'Cancel' : '+ Upload Receipt'}
+                      </button>
+                    </div>
 
                 {showReceiptForm && (
                   <div className="p-6 border-b border-gray-200">
@@ -1040,7 +1175,7 @@ export default function StudentDashboard() {
                           <input
                             type="date"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={receiptFormData.receipt_date}
                             onChange={(e) => setReceiptFormData({ ...receiptFormData, receipt_date: e.target.value })}
                           />
@@ -1054,7 +1189,7 @@ export default function StudentDashboard() {
                             step="0.01"
                             min="0"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={receiptFormData.amount}
                             onChange={(e) => setReceiptFormData({ ...receiptFormData, amount: e.target.value })}
                           />
@@ -1064,7 +1199,7 @@ export default function StudentDashboard() {
                             Semester
                           </label>
                           <select
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={receiptFormData.semester}
                             onChange={(e) => setReceiptFormData({ ...receiptFormData, semester: e.target.value })}
                           >
@@ -1081,7 +1216,7 @@ export default function StudentDashboard() {
                           </label>
                           <input
                             type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={receiptFormData.academic_year}
                             onChange={(e) => setReceiptFormData({ ...receiptFormData, academic_year: e.target.value })}
                             placeholder="e.g., 2024-2025"
@@ -1093,7 +1228,7 @@ export default function StudentDashboard() {
                           </label>
                           <textarea
                             rows="3"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             value={receiptFormData.description}
                             onChange={(e) => setReceiptFormData({ ...receiptFormData, description: e.target.value })}
                             placeholder="Additional notes about this receipt..."
@@ -1107,7 +1242,7 @@ export default function StudentDashboard() {
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                             onChange={(e) => setReceiptFormData({ ...receiptFormData, receipt_file: e.target.files?.[0] || null })}
                           />
                           {receiptFormData.receipt_file && (
@@ -1120,7 +1255,7 @@ export default function StudentDashboard() {
                       <button
                         type="submit"
                         disabled={uploadingReceipt}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}
                       </button>
@@ -1174,30 +1309,34 @@ export default function StudentDashboard() {
                 </div>
               </div>
             )}
-          </>
-        )}
-      </div>
-      </main>
+              </>
+            )}
+          </div>
+        </main>
 
-      {/* Bottom Menu - Mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200/50 shadow-lg z-20 safe-area-inset-bottom">
-        <div className="flex items-center justify-around px-2 py-2">
-          {navigationItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
-                activeTab === item.id
-                  ? 'bg-gradient-to-b from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
-                  : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
-              }`}
-            >
-              <span className="text-2xl mb-1">{item.icon}</span>
-              <span className="text-xs font-medium truncate max-w-[60px]">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+        {/* Bottom Menu - Mobile */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20 safe-area-inset-bottom">
+          <div className="flex items-center justify-around px-2 py-2">
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium truncate max-w-[60px]">{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      </div>
     </div>
   )
 }

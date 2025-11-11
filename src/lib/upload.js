@@ -12,8 +12,34 @@ import imageCompression from 'browser-image-compression'
  * @param {boolean} options.useWebWorker - Use web worker for compression (default: true)
  * @returns {Promise<{url: string, path: string, fileName: string, size: number}>}
  */
+// Allowed file types for security
+const ALLOWED_FILE_TYPES = {
+  'weekly-reports': ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
+  'academic-reports': ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
+  'tuition-receipts': ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
 export async function uploadToR2(file, folder = null, options = {}) {
   try {
+    // Validate file exists
+    if (!file || !(file instanceof File)) {
+      throw new Error('Invalid file provided')
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`File size exceeds maximum allowed size of ${MAX_FILE_SIZE / 1024 / 1024}MB`)
+    }
+
+    // Validate file type if folder is specified
+    if (folder && ALLOWED_FILE_TYPES[folder]) {
+      if (!ALLOWED_FILE_TYPES[folder].includes(file.type)) {
+        throw new Error(`File type not allowed. Allowed types: ${ALLOWED_FILE_TYPES[folder].join(', ')}`)
+      }
+    }
+
     // Get current session for authentication
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
@@ -34,25 +60,32 @@ export async function uploadToR2(file, folder = null, options = {}) {
       }
 
       try {
-        console.log('Compressing image...', {
-          originalSize: (originalSize / 1024 / 1024).toFixed(2) + ' MB',
-          quality: compressionOptions.quality,
-          maxSizeMB: compressionOptions.maxSizeMB,
-        })
+        // Only log in development mode
+        if (import.meta.env.DEV) {
+          console.log('Compressing image...', {
+            originalSize: (originalSize / 1024 / 1024).toFixed(2) + ' MB',
+            quality: compressionOptions.quality,
+            maxSizeMB: compressionOptions.maxSizeMB,
+          })
+        }
 
         fileToUpload = await imageCompression(file, compressionOptions)
 
-        const compressedSize = fileToUpload.size
-        const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
-
-        console.log('Image compressed successfully!', {
-          originalSize: (originalSize / 1024 / 1024).toFixed(2) + ' MB',
-          compressedSize: (compressedSize / 1024 / 1024).toFixed(2) + ' MB',
-          compressionRatio: compressionRatio + '%',
-          quality: compressionOptions.quality,
-        })
+        if (import.meta.env.DEV) {
+          const compressedSize = fileToUpload.size
+          const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
+          console.log('Image compressed successfully!', {
+            originalSize: (originalSize / 1024 / 1024).toFixed(2) + ' MB',
+            compressedSize: (compressedSize / 1024 / 1024).toFixed(2) + ' MB',
+            compressionRatio: compressionRatio + '%',
+            quality: compressionOptions.quality,
+          })
+        }
       } catch (compressionError) {
-        console.warn('Image compression failed, uploading original file:', compressionError)
+        // Only log in development mode
+        if (import.meta.env.DEV) {
+          console.warn('Image compression failed, uploading original file:', compressionError)
+        }
         fileToUpload = file
       }
     }
@@ -81,8 +114,12 @@ export async function uploadToR2(file, folder = null, options = {}) {
 
     return result
   } catch (error) {
-    console.error('Error uploading file to R2:', error)
-    throw error
+    // Only log detailed errors in development mode
+    if (import.meta.env.DEV) {
+      console.error('Error uploading file to R2:', error)
+    }
+    // Don't expose internal error details in production
+    throw new Error(error.message || 'Failed to upload file. Please try again.')
   }
 }
 

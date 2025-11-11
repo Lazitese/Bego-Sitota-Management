@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase, supabaseUrl } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { isValidEmail, isValidPhone, isValidName, isValidRole, validatePassword, sanitizeInput } from '../utils/validation'
+import { 
+  FiHome, 
+  FiUsers, 
+  FiHeart, 
+  FiFileText, 
+  FiSearch,
+  FiLogOut,
+  FiShield,
+  FiUser,
+  FiDollarSign,
+  FiTrendingUp
+} from 'react-icons/fi'
+import logo from '../assets/logo.jpg'
 
 export default function AdminDashboard() {
   const { profile, signOut } = useAuth()
@@ -45,6 +59,9 @@ export default function AdminDashboard() {
   const [academicReports, setAcademicReports] = useState([])
   const [receipts, setReceipts] = useState([])
   const [reportStatusFilter, setReportStatusFilter] = useState('pending') // 'pending', 'approved', 'rejected', 'all'
+
+  // Mobile Profile Menu State
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState(false)
 
   // Mentor Assignment State
   const [mentors, setMentors] = useState([])
@@ -93,6 +110,19 @@ export default function AdminDashboard() {
     fetchStudents()
   }, [])
 
+  // Close mobile profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMobileProfileMenu && !event.target.closest('.mobile-profile-menu')) {
+        setShowMobileProfileMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMobileProfileMenu])
+
   useEffect(() => {
     if (activeTab === 'reports') {
       fetchAllReportsAndReceipts()
@@ -110,7 +140,9 @@ export default function AdminDashboard() {
       if (error) throw error
       setMentors(data || [])
     } catch (error) {
-      console.error('Error fetching mentors:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching mentors:', error)
+      }
     }
   }
 
@@ -135,7 +167,9 @@ export default function AdminDashboard() {
           .in('id', studentIds)
 
         if (studentsError && studentsError.code !== 'PGRST116') {
-          console.warn('Error fetching student records:', studentsError)
+          if (import.meta.env.DEV) {
+            console.warn('Error fetching student records:', studentsError)
+          }
         }
 
         // Fetch mentor profiles
@@ -175,7 +209,9 @@ export default function AdminDashboard() {
         setStudents([])
       }
     } catch (error) {
-      console.error('Error fetching students:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching students:', error)
+      }
       setStudents([])
     }
   }
@@ -299,7 +335,9 @@ export default function AdminDashboard() {
         })
       }
 
-      if (linksError) console.warn('Error fetching active sponsorships:', linksError)
+      if (linksError && import.meta.env.DEV) {
+        console.warn('Error fetching active sponsorships:', linksError)
+      }
 
       // Fetch stats
       const { count: studentsCount } = await supabase
@@ -345,7 +383,9 @@ export default function AdminDashboard() {
         pendingApprovals: totalPendingApprovals,
       })
     } catch (error) {
-      console.error('Error fetching sponsorship data:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching sponsorship data:', error)
+      }
     }
   }
 
@@ -442,7 +482,9 @@ export default function AdminDashboard() {
       setAcademicReports(academicData || [])
       setReceipts(receiptsData || [])
     } catch (error) {
-      console.error('Error fetching reports and receipts:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching reports and receipts:', error)
+      }
       setError('Failed to load reports and receipts')
     }
   }
@@ -465,7 +507,9 @@ export default function AdminDashboard() {
       fetchAllReportsAndReceipts()
       fetchSponsorshipData() // Update stats
     } catch (error) {
-      console.error('Error approving weekly report:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error approving weekly report:', error)
+      }
       setError(error.message || 'Failed to approve weekly report')
     }
   }
@@ -488,7 +532,9 @@ export default function AdminDashboard() {
       fetchAllReportsAndReceipts()
       fetchSponsorshipData()
     } catch (error) {
-      console.error('Error rejecting weekly report:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error rejecting weekly report:', error)
+      }
       setError(error.message || 'Failed to reject weekly report')
     }
   }
@@ -512,7 +558,9 @@ export default function AdminDashboard() {
       fetchAllReportsAndReceipts()
       fetchSponsorshipData()
     } catch (error) {
-      console.error('Error approving academic report:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error approving academic report:', error)
+      }
       setError(error.message || 'Failed to approve academic report')
     }
   }
@@ -537,7 +585,9 @@ export default function AdminDashboard() {
       fetchAllReportsAndReceipts()
       fetchSponsorshipData()
     } catch (error) {
-      console.error('Error rejecting academic report:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error rejecting academic report:', error)
+      }
       setError(error.message || 'Failed to reject academic report')
     }
   }
@@ -560,7 +610,9 @@ export default function AdminDashboard() {
       fetchAllReportsAndReceipts()
       fetchSponsorshipData()
     } catch (error) {
-      console.error('Error verifying receipt:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error verifying receipt:', error)
+      }
       setError(error.message || 'Failed to verify receipt')
     }
   }
@@ -584,7 +636,9 @@ export default function AdminDashboard() {
       fetchAllReportsAndReceipts()
       fetchSponsorshipData()
     } catch (error) {
-      console.error('Error rejecting receipt:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error rejecting receipt:', error)
+      }
       setError(error.message || 'Failed to reject receipt')
     }
   }
@@ -599,7 +653,9 @@ export default function AdminDashboard() {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      console.error('Error fetching users:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching users:', error)
+      }
       setError('Failed to fetch users')
     } finally {
       setLoading(false)
@@ -607,10 +663,13 @@ export default function AdminDashboard() {
   }
 
   const generatePassword = () => {
+    // Use crypto.getRandomValues for cryptographically secure random numbers
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    const array = new Uint32Array(12)
+    crypto.getRandomValues(array)
     let password = ''
     for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
+      password += chars[array[i] % chars.length]
     }
     return password
   }
@@ -621,9 +680,48 @@ export default function AdminDashboard() {
     setSuccess('')
 
     try {
+      // Input validation
+      if (!isValidName(formData.full_name)) {
+        setError('Please enter a valid name (2-100 characters)')
+        return
+      }
+
+      if (!isValidEmail(formData.email)) {
+        setError('Please enter a valid email address')
+        return
+      }
+
+      if (!isValidRole(formData.role)) {
+        setError('Please select a valid role')
+        return
+      }
+
+      if (formData.phone_number && !isValidPhone(formData.phone_number)) {
+        setError('Please enter a valid phone number')
+        return
+      }
+
+      if (formData.password) {
+        const passwordValidation = validatePassword(formData.password)
+        if (!passwordValidation.valid) {
+          setError(passwordValidation.message)
+          return
+        }
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         throw new Error('Not authenticated')
+      }
+
+      // Sanitize inputs
+      const sanitizedData = {
+        email: sanitizeInput(formData.email.trim().toLowerCase()),
+        password: formData.password || null,
+        full_name: sanitizeInput(formData.full_name),
+        gender: formData.gender ? sanitizeInput(formData.gender) : null,
+        phone_number: formData.phone_number ? sanitizeInput(formData.phone_number) : null,
+        role: formData.role,
       }
 
       const response = await fetch(
@@ -634,14 +732,7 @@ export default function AdminDashboard() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password || null,
-            full_name: formData.full_name,
-            gender: formData.gender || null,
-            phone_number: formData.phone_number || null,
-            role: formData.role,
-          }),
+          body: JSON.stringify(sanitizedData),
         }
       )
 
@@ -651,7 +742,7 @@ export default function AdminDashboard() {
         throw new Error(result.error || 'Failed to create user')
       }
 
-      setSuccess(`User created successfully! Password: ${result.password}`)
+      setSuccess('User created successfully! The password has been generated and sent securely.')
       setFormData({
         full_name: '',
         email: '',
@@ -663,8 +754,11 @@ export default function AdminDashboard() {
       setShowCreateForm(false)
       fetchUsers()
     } catch (error) {
-      console.error('Error creating user:', error)
-      setError(error.message || 'Failed to create user')
+      // Don't expose sensitive error details
+      const errorMessage = error.message || 'Failed to create user'
+      setError(errorMessage.includes('duplicate') || errorMessage.includes('already exists') 
+        ? 'A user with this email already exists' 
+        : 'Failed to create user. Please try again.')
     }
   }
 
@@ -701,17 +795,47 @@ export default function AdminDashboard() {
     setSuccess('')
 
     try {
+      // Input validation
+      if (!isValidName(editFormData.full_name)) {
+        setError('Please enter a valid name (2-100 characters)')
+        return
+      }
+
+      if (!isValidEmail(editFormData.email)) {
+        setError('Please enter a valid email address')
+        return
+      }
+
+      if (!isValidRole(editFormData.role)) {
+        setError('Please select a valid role')
+        return
+      }
+
+      if (editFormData.phone_number && !isValidPhone(editFormData.phone_number)) {
+        setError('Please enter a valid phone number')
+        return
+      }
+
+      if (editFormData.password && editFormData.password.trim() !== '') {
+        const passwordValidation = validatePassword(editFormData.password)
+        if (!passwordValidation.valid) {
+          setError(passwordValidation.message)
+          return
+        }
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         throw new Error('Not authenticated')
       }
 
+      // Sanitize inputs
       const updateData = {
         userId: editingUser.id,
-        full_name: editFormData.full_name,
-        email: editFormData.email,
-        gender: editFormData.gender || null,
-        phone_number: editFormData.phone_number || null,
+        full_name: sanitizeInput(editFormData.full_name),
+        email: sanitizeInput(editFormData.email.trim().toLowerCase()),
+        gender: editFormData.gender ? sanitizeInput(editFormData.gender) : null,
+        phone_number: editFormData.phone_number ? sanitizeInput(editFormData.phone_number) : null,
         role: editFormData.role,
       }
 
@@ -750,8 +874,11 @@ export default function AdminDashboard() {
       })
       fetchUsers()
     } catch (error) {
-      console.error('Error updating user:', error)
-      setError(error.message || 'Failed to update user')
+      // Don't expose sensitive error details
+      const errorMessage = error.message || 'Failed to update user'
+      setError(errorMessage.includes('duplicate') || errorMessage.includes('already exists') 
+        ? 'A user with this email already exists' 
+        : 'Failed to update user. Please try again.')
     }
   }
 
@@ -787,7 +914,9 @@ export default function AdminDashboard() {
       setSuccess('User deleted successfully')
       fetchUsers()
     } catch (error) {
-      console.error('Error deleting user:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error deleting user:', error)
+      }
       setError(error.message || 'Failed to delete user')
     }
   }
@@ -848,7 +977,9 @@ export default function AdminDashboard() {
       fetchUsers()
       fetchStudents()
     } catch (error) {
-      console.error('Error approving request:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error approving request:', error)
+      }
       setError(error.message || 'Failed to approve request')
     }
   }
@@ -932,7 +1063,9 @@ export default function AdminDashboard() {
       setEditStudentFormData({ school_name: '', grade_level: '', gpa: '' })
       fetchStudents() // Refresh student list
     } catch (error) {
-      console.error('Error updating student information:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error updating student information:', error)
+      }
       setError(error.message || 'Failed to update student information')
     }
   }
@@ -947,10 +1080,6 @@ export default function AdminDashboard() {
       // Convert empty string to null for mentor_id
       const mentorId = selectedMentorId && selectedMentorId.trim() !== '' ? selectedMentorId : null
 
-      console.log('Updating student mentor:', {
-        studentId: selectedStudentId,
-        mentorId: mentorId,
-      })
 
       // First, check if student record exists
       const { data: existingStudent, error: checkError } = await supabase
@@ -960,7 +1089,9 @@ export default function AdminDashboard() {
         .maybeSingle()
 
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking student record:', checkError)
+        if (import.meta.env.DEV) {
+          console.error('Error checking student record:', checkError)
+        }
         throw checkError
       }
 
@@ -978,12 +1109,13 @@ export default function AdminDashboard() {
           .select()
 
         if (error) {
-          console.error('Supabase update error:', error)
+          if (import.meta.env.DEV) {
+            console.error('Supabase update error:', error)
+          }
           throw error
         }
 
         updateResult = data
-        console.log('Update result:', data)
       } else {
         // Student record doesn't exist, create it with mentor_id
         const { data, error } = await supabase
@@ -997,12 +1129,13 @@ export default function AdminDashboard() {
           .select()
 
         if (error) {
-          console.error('Supabase insert error:', error)
+          if (import.meta.env.DEV) {
+            console.error('Supabase insert error:', error)
+          }
           throw error
         }
 
         updateResult = data
-        console.log('Insert result:', data)
       }
 
       setSuccess(mentorId ? 'Mentor assigned successfully!' : 'Mentor removed successfully!')
@@ -1023,12 +1156,16 @@ export default function AdminDashboard() {
         .eq('status', 'active')
 
       if (linkError) {
-        console.warn('Error updating sponsorship links:', linkError)
+        if (import.meta.env.DEV) {
+          console.warn('Error updating sponsorship links:', linkError)
+        }
       } else {
         fetchSponsorshipData() // Refresh sponsorship data
       }
     } catch (error) {
-      console.error('Error updating student mentor:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error updating student mentor:', error)
+      }
       setError(error.message || 'Failed to update mentor. Please check console for details.')
     }
   }
@@ -1055,24 +1192,16 @@ export default function AdminDashboard() {
       setSuccess('Sponsorship request rejected')
       fetchSponsorshipData()
     } catch (error) {
-      console.error('Error rejecting request:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error rejecting request:', error)
+      }
       setError(error.message || 'Failed to reject request')
     }
   }
 
   const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800'
-      case 'donor':
-        return 'bg-blue-100 text-blue-800'
-      case 'mentor':
-        return 'bg-green-100 text-green-800'
-      case 'student':
-        return 'bg-purple-100 text-purple-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
+    // All roles use black/white styling
+    return 'bg-orange-500 text-white'
   }
 
   const getStatusColor = (status) => {
@@ -1310,7 +1439,9 @@ export default function AdminDashboard() {
         sponsoredStudents
       })
     } catch (error) {
-      console.error('Error fetching user detail data:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error fetching user detail data:', error)
+      }
     } finally {
       setLoadingUserDetails(false)
     }
@@ -1318,77 +1449,139 @@ export default function AdminDashboard() {
 
   // Define navigation items
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📈' },
-    { id: 'users', label: 'User Management', icon: '👥' },
-    { id: 'sponsorships', label: 'Sponsorships', icon: '🤝' },
-    { id: 'reports', label: 'Reports & Receipts', icon: '📊' },
+    { id: 'dashboard', label: 'Dashboard', icon: FiHome },
+    { id: 'users', label: 'User Management', icon: FiUsers },
+    { id: 'sponsorships', label: 'Sponsorships', icon: FiHeart },
+    { id: 'reports', label: 'Reports & Receipts', icon: FiFileText },
   ]
+
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Check if we need extra menu items on mobile (more than 5 items)
   const showExtraMobileMenu = navigationItems.length > 5
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
+    <div className="min-h-screen bg-white flex">
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex lg:flex-shrink-0">
-        <div className="flex flex-col w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 shadow-lg">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200/50 bg-gradient-to-r from-indigo-600 to-indigo-700">
-            <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
+        <div className="flex flex-col w-64 bg-white border-r border-gray-200">
+          {/* Brand Section */}
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
+            {/* Logo */}
+            <div className="flex-shrink-0 w-10 h-10 relative">
+              <img 
+                src={logo} 
+                alt="Bego Sitota Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
+            </div>
+            <h1 className="text-lg font-bold text-black">Bego Sitota</h1>
+          </div>
+
+          {/* Search Bar */}
+          <div className="px-4 py-4 border-b border-gray-200">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {navigationItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  activeTab === item.id
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-600'
-                }`}
-              >
-                <span className="text-lg">{item.icon}</span>
-                <span>{item.label}</span>
-              </button>
-            ))}
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-gray-700'}`} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                </button>
+              )
+            })}
           </nav>
 
-          {/* Sidebar Footer */}
-          <div className="px-4 py-4 border-t border-gray-200/50">
-            <div className="flex items-center space-x-3 mb-4 px-4 py-2 rounded-lg bg-gray-50">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+          {/* Sidebar Footer - User Profile */}
+          <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center gap-3 px-3 py-3">
+              <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
                 {profile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-black truncate">
                   {profile?.full_name || 'Admin'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">Administrator</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {profile?.email || 'admin@example.com'}
+                </p>
               </div>
-            </div>
               <button
                 onClick={signOut}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-medium text-sm transition-colors duration-200"
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 flex-shrink-0"
+                title="Sign Out"
               >
-              <span>🚪</span>
-              <span>Sign Out</span>
+                <FiLogOut className="w-5 h-5 text-red-600" />
               </button>
             </div>
           </div>
+        </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-0 bg-gray-50">
         {/* Top Header - Mobile */}
-        <header className="lg:hidden bg-white/80 backdrop-blur-sm border-b border-gray-200/50 shadow-sm sticky top-0 z-10">
+        <header className="lg:hidden bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
           <div className="flex items-center justify-between h-16 px-4">
-            <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
+            <div className="flex-shrink-0 w-10 h-10 relative">
+              <img 
+                src={logo} 
+                alt="Bego Sitota Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
+            </div>
+            <div className="relative mobile-profile-menu">
+              <button
+                onClick={() => setShowMobileProfileMenu(!showMobileProfileMenu)}
+                className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              >
                 {profile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-        </div>
+              </button>
+              
+              {/* Mobile Profile Menu Dropdown */}
+              {showMobileProfileMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-black">
+                      {profile?.full_name || 'Admin'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {profile?.email || 'admin@example.com'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowMobileProfileMenu(false)
+                      signOut()
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors duration-200"
+                  >
+                    <FiLogOut className="w-5 h-5" />
+                    <span className="font-medium">Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -1410,7 +1603,7 @@ export default function AdminDashboard() {
 
             {/* Page Title */}
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-black">
                 {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
@@ -1422,86 +1615,82 @@ export default function AdminDashboard() {
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Total Users Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+              <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Total Users</h2>
+                  <h2 className="text-3xl font-bold text-black mb-2">Total Users</h2>
                   <p className="text-sm text-gray-500">All registered users in the system</p>
-          </div>
+                </div>
                 <div className="text-right">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{users.length}</span>
-                  <p className="text-xs text-gray-500">total</p>
-          </div>
-          </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold text-black">{users.length}</span>
+                    <span className="text-sm text-gray-500 font-medium">users</span>
+                  </div>
+                </div>
+              </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-5 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200/50 hover:shadow-md transition-all duration-200">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">👨‍💼</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+                <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                  <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <FiShield className="w-7 h-7 text-white" />
                   </div>
-                  <p className="text-xs font-medium text-red-700 mb-1">Admins</p>
-                  <p className="text-2xl font-bold text-red-900">{users.filter(u => u.role === 'admin').length}</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Admins</p>
+                  <p className="text-3xl font-bold text-black">{users.filter(u => u.role === 'admin').length}</p>
                 </div>
-                <div className="text-center p-5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200/50 hover:shadow-md transition-all duration-200">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">💙</span>
+                <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                  <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <FiHeart className="w-7 h-7 text-white" />
                   </div>
-                  <p className="text-xs font-medium text-blue-700 mb-1">Donors</p>
-                  <p className="text-2xl font-bold text-blue-900">{users.filter(u => u.role === 'donor').length}</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Donors</p>
+                  <p className="text-3xl font-bold text-black">{users.filter(u => u.role === 'donor').length}</p>
                 </div>
-                <div className="text-center p-5 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200/50 hover:shadow-md transition-all duration-200">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🎓</span>
+                <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                  <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <FiUser className="w-7 h-7 text-white" />
                   </div>
-                  <p className="text-xs font-medium text-purple-700 mb-1">Mentors</p>
-                  <p className="text-2xl font-bold text-purple-900">{users.filter(u => u.role === 'mentor').length}</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Mentors</p>
+                  <p className="text-3xl font-bold text-black">{users.filter(u => u.role === 'mentor').length}</p>
                 </div>
-                <div className="text-center p-5 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200/50 hover:shadow-md transition-all duration-200">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">👥</span>
+                <div className="group text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+                  <div className="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <FiUsers className="w-7 h-7 text-white" />
                   </div>
-                  <p className="text-xs font-medium text-indigo-700 mb-1">Students</p>
-                  <p className="text-2xl font-bold text-indigo-900">{users.filter(u => u.role === 'student').length}</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Students</p>
+                  <p className="text-3xl font-bold text-black">{users.filter(u => u.role === 'student').length}</p>
                 </div>
-          </div>
-        </div>
+              </div>
+            </div>
 
             {/* Quick Overview */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Quick Overview</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-black mb-2">Quick Overview</h2>
                 <p className="text-sm text-gray-500">Key metrics at a glance</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="relative text-center p-6 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 rounded-xl border border-blue-200/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200/30 rounded-full -mr-10 -mt-10"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 mx-auto mb-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                      <span className="text-2xl">🤝</span>
-                    </div>
-                    <p className="text-sm font-semibold text-blue-700 mb-2">Sponsorship Requests</p>
-                    <p className="text-3xl font-bold text-blue-900">{sponsorshipRequests.length}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="group relative text-center p-8 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-xl hover:border-gray-300 transition-all duration-200 overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500 opacity-5 rounded-full -mr-16 -mt-16"></div>
+                  <div className="w-16 h-16 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 relative z-10">
+                    <FiHeart className="w-8 h-8 text-white" />
                   </div>
+                  <p className="text-base font-semibold text-gray-700 mb-3">Sponsorship Requests</p>
+                  <p className="text-4xl font-bold text-black">{sponsorshipRequests.length}</p>
                 </div>
-                <div className="relative text-center p-6 bg-gradient-to-br from-purple-50 via-purple-100 to-purple-50 rounded-xl border border-purple-200/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-purple-200/30 rounded-full -mr-10 -mt-10"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 mx-auto mb-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                      <span className="text-2xl">📋</span>
-                    </div>
-                    <p className="text-sm font-semibold text-purple-700 mb-2">Weekly Reports</p>
-                    <p className="text-3xl font-bold text-purple-900">{weeklyReports.length}</p>
+                <div className="group relative text-center p-8 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-xl hover:border-gray-300 transition-all duration-200 overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500 opacity-5 rounded-full -mr-16 -mt-16"></div>
+                  <div className="w-16 h-16 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 relative z-10">
+                    <FiFileText className="w-8 h-8 text-white" />
                   </div>
+                  <p className="text-base font-semibold text-gray-700 mb-3">Weekly Reports</p>
+                  <p className="text-4xl font-bold text-black">{weeklyReports.length}</p>
                 </div>
-                <div className="relative text-center p-6 bg-gradient-to-br from-green-50 via-green-100 to-green-50 rounded-xl border border-green-200/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-green-200/30 rounded-full -mr-10 -mt-10"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 mx-auto mb-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
-                      <span className="text-2xl">💰</span>
-                    </div>
-                    <p className="text-sm font-semibold text-green-700 mb-2">Tuition Receipts</p>
-                    <p className="text-3xl font-bold text-green-900">{receipts.length}</p>
+                <div className="group relative text-center p-8 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-xl hover:border-gray-300 transition-all duration-200 overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500 opacity-5 rounded-full -mr-16 -mt-16"></div>
+                  <div className="w-16 h-16 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 relative z-10">
+                    <FiDollarSign className="w-8 h-8 text-white" />
                   </div>
+                  <p className="text-base font-semibold text-gray-700 mb-3">Tuition Receipts</p>
+                  <p className="text-4xl font-bold text-black">{receipts.length}</p>
                 </div>
               </div>
             </div>
@@ -1512,7 +1701,7 @@ export default function AdminDashboard() {
         {activeTab === 'users' && (
           <>
             {/* Category Filter Buttons and Create Button */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/20 p-6 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Category Buttons */}
                 <div className="flex flex-wrap gap-2">
@@ -1520,7 +1709,7 @@ export default function AdminDashboard() {
                     onClick={() => setUserCategoryFilter('all')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                       userCategoryFilter === 'all'
-                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1530,7 +1719,7 @@ export default function AdminDashboard() {
                     onClick={() => setUserCategoryFilter('admin')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                       userCategoryFilter === 'admin'
-                        ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md transform scale-105'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1540,7 +1729,7 @@ export default function AdminDashboard() {
                     onClick={() => setUserCategoryFilter('donor')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                       userCategoryFilter === 'donor'
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md transform scale-105'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1550,7 +1739,7 @@ export default function AdminDashboard() {
                     onClick={() => setUserCategoryFilter('mentor')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                       userCategoryFilter === 'mentor'
-                        ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md transform scale-105'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1560,7 +1749,7 @@ export default function AdminDashboard() {
                     onClick={() => setUserCategoryFilter('student')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                       userCategoryFilter === 'student'
-                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md transform scale-105'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1576,10 +1765,10 @@ export default function AdminDashboard() {
                   setError('')
                   setSuccess('')
                 }}
-                  className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${
+                  className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                     showCreateForm
                       ? 'bg-gray-500 text-white hover:bg-gray-600'
-                      : 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800'
+                      : 'bg-orange-500 text-white hover:bg-orange-600'
                   }`}
                 >
                   {showCreateForm ? '✕ Cancel' : '+ Create New User'}
@@ -1587,9 +1776,9 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-        {/* Edit User Form */}
-        {editingUser && (
-          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            {/* Edit User Form */}
+            {editingUser && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Edit User: {editingUser.full_name}</h2>
             <form onSubmit={handleUpdateUser} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1600,7 +1789,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={editFormData.full_name}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, full_name: e.target.value })
@@ -1614,7 +1803,7 @@ export default function AdminDashboard() {
                   <input
                     type="email"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={editFormData.email}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, email: e.target.value })
@@ -1627,7 +1816,7 @@ export default function AdminDashboard() {
                   </label>
                   <input
                     type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={editFormData.phone_number}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, phone_number: e.target.value })
@@ -1639,7 +1828,7 @@ export default function AdminDashboard() {
                     Gender
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={editFormData.gender}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, gender: e.target.value })
@@ -1657,7 +1846,7 @@ export default function AdminDashboard() {
                   </label>
                   <select
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={editFormData.role}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, role: e.target.value })
@@ -1675,7 +1864,7 @@ export default function AdminDashboard() {
                   </label>
                   <input
                     type="password"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     placeholder="Enter new password or leave empty"
                     value={editFormData.password}
                     onChange={(e) =>
@@ -1687,7 +1876,7 @@ export default function AdminDashboard() {
               <div className="flex space-x-4">
                 <button
                   type="submit"
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+                  className="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600"
                 >
                   Update User
                 </button>
@@ -1703,9 +1892,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Create User Form */}
-        {showCreateForm && (
-          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            {/* Create User Form */}
+            {showCreateForm && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Create New User</h2>
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1716,7 +1905,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={formData.full_name}
                     onChange={(e) =>
                       setFormData({ ...formData, full_name: e.target.value })
@@ -1730,7 +1919,7 @@ export default function AdminDashboard() {
                   <input
                     type="email"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
@@ -1743,7 +1932,7 @@ export default function AdminDashboard() {
                   </label>
                   <input
                     type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={formData.phone_number}
                     onChange={(e) =>
                       setFormData({ ...formData, phone_number: e.target.value })
@@ -1755,7 +1944,7 @@ export default function AdminDashboard() {
                     Gender
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={formData.gender}
                     onChange={(e) =>
                       setFormData({ ...formData, gender: e.target.value })
@@ -1773,7 +1962,7 @@ export default function AdminDashboard() {
                   </label>
                   <select
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={formData.role}
                     onChange={(e) =>
                       setFormData({ ...formData, role: e.target.value })
@@ -1791,7 +1980,7 @@ export default function AdminDashboard() {
                   </label>
                   <input
                     type="password"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                     value={formData.password}
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
@@ -1801,7 +1990,7 @@ export default function AdminDashboard() {
               </div>
               <button
                 type="submit"
-                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+                className="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600"
               >
                 Create User
               </button>
@@ -1809,8 +1998,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Table */}
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            {/* Users Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold">All Users</h2>
           </div>
@@ -1881,13 +2070,13 @@ export default function AdminDashboard() {
                               setShowUserDetailModal(true)
                               await fetchUserDetailData(user)
                             }}
-                            className="text-blue-600 hover:text-blue-900 font-medium"
+                            className="text-black hover:text-gray-700 font-medium"
                           >
                             View
                           </button>
                           <button
                             onClick={() => handleEditUser(user)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-black hover:text-gray-700"
                           >
                             Edit
                           </button>
@@ -1913,13 +2102,13 @@ export default function AdminDashboard() {
         {activeTab === 'sponsorships' && (
           <>
             {/* Category Filter Buttons */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/20 p-6 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSponsorshipCategoryFilter('all')}
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                     sponsorshipCategoryFilter === 'all'
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -1929,7 +2118,7 @@ export default function AdminDashboard() {
                   onClick={() => setSponsorshipCategoryFilter('requests')}
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                     sponsorshipCategoryFilter === 'requests'
-                      ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -1939,7 +2128,7 @@ export default function AdminDashboard() {
                   onClick={() => setSponsorshipCategoryFilter('active')}
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                     sponsorshipCategoryFilter === 'active'
-                      ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -1950,8 +2139,8 @@ export default function AdminDashboard() {
 
             {/* Sponsorship Requests Section */}
             {(sponsorshipCategoryFilter === 'all' || sponsorshipCategoryFilter === 'requests') && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-md rounded-xl border border-white/20 overflow-hidden mb-6">
-                <div className="px-6 py-4 border-b border-gray-200/50">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold">Sponsorship Requests</h2>
             </div>
             {sponsorshipRequests.length === 0 ? (
@@ -2012,7 +2201,7 @@ export default function AdminDashboard() {
                                     setSponsorshipDetailType('request')
                                     setShowSponsorshipDetailModal(true)
                                   }}
-                                  className="text-blue-600 hover:text-blue-900 font-medium"
+                                  className="text-black hover:text-gray-700 font-medium"
                                 >
                                   View
                                 </button>
@@ -2045,8 +2234,8 @@ export default function AdminDashboard() {
 
             {/* Active Sponsorships Section */}
             {(sponsorshipCategoryFilter === 'all' || sponsorshipCategoryFilter === 'active') && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-md rounded-xl border border-white/20 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200/50">
+              <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold">Active Sponsorships</h2>
               </div>
               {activeSponsorships.length === 0 ? (
@@ -2094,7 +2283,7 @@ export default function AdminDashboard() {
                                   setSponsorshipDetailType('active')
                                   setShowSponsorshipDetailModal(true)
                                 }}
-                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                className="text-black hover:text-gray-700 font-medium"
                               >
                                 View
                               </button>
@@ -2114,13 +2303,13 @@ export default function AdminDashboard() {
         {activeTab === 'reports' && (
           <>
             {/* Category Filter Buttons */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/20 p-6 mb-6">
-              <div className="flex flex-wrap gap-2 mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+              <div className="flex flex-row gap-3 mb-4 overflow-x-auto">
                 <button
                   onClick={() => setReportsCategoryFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                     reportsCategoryFilter === 'all'
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -2128,9 +2317,9 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setReportsCategoryFilter('weekly')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                     reportsCategoryFilter === 'weekly'
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -2138,9 +2327,9 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setReportsCategoryFilter('academic')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                     reportsCategoryFilter === 'academic'
-                      ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -2148,9 +2337,9 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setReportsCategoryFilter('receipts')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                     reportsCategoryFilter === 'receipts'
-                      ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md transform scale-105'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -2159,12 +2348,12 @@ export default function AdminDashboard() {
               </div>
               
               {/* Status Filter - Available for all categories */}
-              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200/50">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
                 <span className="text-sm font-semibold text-gray-700 mr-2">Status Filter:</span>
                   <button
                     onClick={() => setReportStatusFilter('all')}
                   className={`px-3 py-1 text-sm rounded-md transition-all duration-200 ${
-                    reportStatusFilter === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    reportStatusFilter === 'all' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
                     All
@@ -2209,8 +2398,8 @@ export default function AdminDashboard() {
 
             {/* Weekly Reports Section */}
             {(reportsCategoryFilter === 'all' || reportsCategoryFilter === 'weekly') && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-md rounded-xl border border-white/20 overflow-hidden mb-6">
-                <div className="px-6 py-4 border-b border-gray-200/50">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div className="px-6 py-4 border-b border-gray-200">
                   <h2 className="text-xl font-semibold">Weekly Volunteer Reports</h2>
               </div>
               {weeklyReports.length === 0 ? (
@@ -2266,7 +2455,7 @@ export default function AdminDashboard() {
                                   setReportDetailType('weekly')
                                   setShowReportDetailModal(true)
                                 }}
-                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                className="text-black hover:text-gray-700 font-medium"
                               >
                                 View
                               </button>
@@ -2299,8 +2488,8 @@ export default function AdminDashboard() {
 
             {/* Academic Reports Section */}
             {(reportsCategoryFilter === 'all' || reportsCategoryFilter === 'academic') && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-md rounded-xl border border-white/20 overflow-hidden mb-6">
-                <div className="px-6 py-4 border-b border-gray-200/50">
+              <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden mb-6">
+                <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold">Academic Reports</h2>
               </div>
               {academicReports.length === 0 ? (
@@ -2354,7 +2543,7 @@ export default function AdminDashboard() {
                                   setReportDetailType('academic')
                                   setShowReportDetailModal(true)
                                 }}
-                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                className="text-black hover:text-gray-700 font-medium"
                               >
                                 View
                               </button>
@@ -2387,8 +2576,8 @@ export default function AdminDashboard() {
 
             {/* Tuition Receipts Section */}
             {(reportsCategoryFilter === 'all' || reportsCategoryFilter === 'receipts') && (
-              <div className="bg-white/80 backdrop-blur-sm shadow-md rounded-xl border border-white/20 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200/50">
+              <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold">Tuition Receipts</h2>
               </div>
               {receipts.length === 0 ? (
@@ -2442,7 +2631,7 @@ export default function AdminDashboard() {
                                   setReportDetailType('receipt')
                                   setShowReportDetailModal(true)
                                 }}
-                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                className="text-black hover:text-gray-700 font-medium"
                               >
                                 View
                               </button>
@@ -2479,7 +2668,7 @@ export default function AdminDashboard() {
       {/* Mentor Assignment Modal */}
       {showMentorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-md w-full mx-4">
             <h2 className="text-xl font-semibold mb-4">
               Assign/Reassign Mentor
             </h2>
@@ -2489,7 +2678,7 @@ export default function AdminDashboard() {
                   Select Mentor (Optional)
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                   value={selectedMentorId}
                   onChange={(e) => setSelectedMentorId(e.target.value)}
                 >
@@ -2507,7 +2696,7 @@ export default function AdminDashboard() {
               <div className="flex space-x-4">
                 <button
                   onClick={() => handleUpdateStudentMentor()}
-                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                  className="flex-1 bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600"
                 >
                   Save
                 </button>
@@ -2530,7 +2719,7 @@ export default function AdminDashboard() {
       {/* Edit Student Information Modal */}
       {showEditStudentModal && selectedStudentForEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-md w-full mx-4">
             <h2 className="text-xl font-semibold mb-4">
               Edit Student Information - {selectedStudentForEdit.full_name}
             </h2>
@@ -2541,7 +2730,7 @@ export default function AdminDashboard() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                   value={editStudentFormData.school_name}
                   onChange={(e) => setEditStudentFormData({ ...editStudentFormData, school_name: e.target.value })}
                   placeholder="Enter school name"
@@ -2553,7 +2742,7 @@ export default function AdminDashboard() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                   value={editStudentFormData.grade_level}
                   onChange={(e) => setEditStudentFormData({ ...editStudentFormData, grade_level: e.target.value })}
                   placeholder="e.g., Grade 10, 11, 12"
@@ -2568,7 +2757,7 @@ export default function AdminDashboard() {
                   step="0.01"
                   min="0"
                   max="4"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-black"
                   value={editStudentFormData.gpa}
                   onChange={(e) => setEditStudentFormData({ ...editStudentFormData, gpa: e.target.value })}
                   placeholder="e.g., 3.5"
@@ -2578,7 +2767,7 @@ export default function AdminDashboard() {
               <div className="flex space-x-4">
                 <button
                   onClick={() => handleUpdateStudentInfo()}
-                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                  className="flex-1 bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600"
                 >
                   Save
                 </button>
@@ -2601,8 +2790,8 @@ export default function AdminDashboard() {
       {/* User Detail View Modal */}
       {showUserDetailModal && selectedUserForView && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-orange-500 px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">User Details</h2>
               <button
                 onClick={() => {
@@ -3110,7 +3299,7 @@ export default function AdminDashboard() {
                     setShowUserDetailModal(false)
                     handleEditUser(selectedUserForView)
                   }}
-                  className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 font-semibold transition-colors duration-200 shadow-md hover:shadow-lg"
+                  className="flex-1 bg-orange-500 text-white px-4 py-3 rounded-lg hover:bg-orange-600 font-semibold transition-colors duration-200"
                 >
                   Edit User
                 </button>
@@ -3132,8 +3321,8 @@ export default function AdminDashboard() {
       {/* Sponsorship Detail View Modal */}
       {showSponsorshipDetailModal && selectedSponsorshipForView && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-orange-500 px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">
                 {sponsorshipDetailType === 'request' ? 'Sponsorship Request Details' : 'Active Sponsorship Details'}
               </h2>
@@ -3409,8 +3598,8 @@ export default function AdminDashboard() {
       {/* Report & Receipt Detail View Modal */}
       {showReportDetailModal && selectedReportForView && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-orange-500 px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">
                 {reportDetailType === 'weekly' && 'Weekly Report Details'}
                 {reportDetailType === 'academic' && 'Academic Report Details'}
@@ -3735,7 +3924,7 @@ export default function AdminDashboard() {
                             href={selectedReportForView.receipt_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-indigo-600 hover:text-indigo-800 underline font-medium"
+                            className="text-black hover:text-gray-700 underline font-medium"
                           >
                             View Receipt File
                           </a>
@@ -3788,35 +3977,43 @@ export default function AdminDashboard() {
         </main>
 
         {/* Bottom Menu - Mobile */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200/50 shadow-lg z-20 safe-area-inset-bottom">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20 safe-area-inset-bottom">
           <div className="flex items-center justify-around px-2 py-2">
-            {navigationItems.slice(0, 5).map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
-                  activeTab === item.id
-                    ? 'bg-gradient-to-b from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
-                    : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-2xl mb-1">{item.icon}</span>
-                <span className="text-xs font-medium truncate max-w-[60px]">{item.label.split(' ')[0]}</span>
-              </button>
-            ))}
-            {showExtraMobileMenu && navigationItems.length > 5 && (
-              <button
-                onClick={() => setActiveTab(navigationItems[5].id)}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
-                  activeTab === navigationItems[5].id
-                    ? 'bg-gradient-to-b from-indigo-600 to-indigo-700 text-white shadow-md transform scale-105'
-                    : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-2xl mb-1">{navigationItems[5].icon}</span>
-                <span className="text-xs font-medium truncate max-w-[60px]">{navigationItems[5].label.split(' ')[0]}</span>
-              </button>
-            )}
+            {navigationItems.slice(0, 5).map((item) => {
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium truncate max-w-[60px]">{item.label.split(' ')[0]}</span>
+                </button>
+              )
+            })}
+            {showExtraMobileMenu && navigationItems.length > 5 && (() => {
+              const item = navigationItems[5]
+              const IconComponent = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[60px] transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-orange-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <IconComponent className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium truncate max-w-[60px]">{item.label.split(' ')[0]}</span>
+                </button>
+              )
+            })()}
           </div>
         </nav>
       </div>
