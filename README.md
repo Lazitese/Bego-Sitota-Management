@@ -149,30 +149,6 @@ The application uses Supabase Edge Functions for secure admin operations:
 
 These functions verify admin permissions before executing operations.
 
-## 🚦 Environment Variables
-
-The Supabase configuration is currently hardcoded in `src/lib/supabase.js`. For production, consider moving these to environment variables:
-
-```env
-VITE_SUPABASE_URL=https://qysppoichxcgticleyit.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key_here
-```
-
 ## 📄 License
 
 This project is private and proprietary.
-
-## 🐛 Troubleshooting
-
-### "Not authenticated" errors
-- Ensure you're logged in with a valid session
-- Check that your session hasn't expired
-
-### "Forbidden: Admin access required"
-- Verify you're logged in as an admin user
-- Check your profile role in the database
-
-### Users not appearing in admin dashboard
-- Verify RLS policies are correctly set up
-- Ensure you're logged in as an admin
-- Check browser console for errors
